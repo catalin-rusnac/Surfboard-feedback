@@ -12,7 +12,10 @@ export default {
   components: {
     AngleApp,
     GPSApp
-  }
+  },
+  mounted() {
+  document.title = "SurfSiren";
+},
 }
 </script>
 
