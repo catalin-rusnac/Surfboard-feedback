@@ -5,7 +5,8 @@
       <p :style="{ color: toColor(alpha) }">Alpha: {{ formatNumber(alpha) }}</p>
       <p :style="{ color: toColor(beta) }">Beta: {{ formatNumber(beta) }}</p>
       <p :style="{ color: toColor(gamma) }">Gamma: {{ formatNumber(gamma) }}</p>
-      <input type="number" v-model.number="thresholdBeta" min="0" max="50" step="1" />
+      <label for="betaLimit">Beta limit:</label>
+      <input id="betaLimit" type="number" v-model.number="thresholdBeta" min="0" max="50" step="1" />
       <button @click="toggleSound">{{ soundEnabled ? 'Disable Sound' : 'Enable Sound' }}</button>
     </div>
   </div>

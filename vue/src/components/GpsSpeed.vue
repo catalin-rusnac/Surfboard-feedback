@@ -1,9 +1,11 @@
 <template>
-  <div>
+  <div :style="{ backgroundColor: speed > speedLimit ? 'green' : '' }">
     <h1>GPS Information</h1>
     <p>Latitude: {{ latitude }}</p>
     <p>Longitude: {{ longitude }}</p>
     <p>Speed: {{ speed }} m/s</p>
+    <label for="speedLimit">Speed limit:</label>
+    <input id="speedLimit" type="number" v-model.number="speedLimit" min="0" step="1" />
   </div>
 </template>
 
@@ -14,7 +16,8 @@ export default {
     return {
       latitude: null,
       longitude: null,
-      speed: null
+      speed: null,
+      speedLimit: 0.5
     }
   },
   created() {
