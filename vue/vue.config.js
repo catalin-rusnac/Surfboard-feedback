@@ -2,7 +2,10 @@ const { defineConfig } = require('@vue/cli-service')
 const fs = require('fs')
 
 module.exports = defineConfig({
-  transpileDependencies: true,
+  outputDir: 'docs',
+  publicPath: process.env.NODE_ENV === 'production'
+    ? '/Surfboard-feedback/'
+    : '/',
   devServer: {
     headers: {
       'Access-Control-Allow-Origin': '*',
