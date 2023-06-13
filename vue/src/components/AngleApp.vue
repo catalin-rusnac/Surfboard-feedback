@@ -4,11 +4,9 @@
       <h1>Device Orientation</h1>
       <button v-if="!hasPermission" @click="getOrientationPermission">Enable Device Orientation</button>
       <div v-else>
-        <p :style="{ color: toColor(alpha) }">Alpha: {{ formatNumber(alpha) }}</p>
-        <p :style="{ color: toColor(beta) }">Beta: {{ formatNumber(beta) }}</p>
-        <p :style="{ color: toColor(gamma) }">Gamma: {{ formatNumber(gamma) }}</p>
-        <label for="betaLimit">Beta limit:</label>
-        <input id="betaLimit" type="number" v-model.number="thresholdBeta" min="0" max="50" step="1" />
+        <p>Angle: {{ formatNumber(angle) }}</p>
+        <label for="angleLimit">Angle limit:</label>
+        <input id="angleLimit" type="number" v-model.number="thresholdAngle" min="0" max="50" step="1" />
         <button @click="toggleSound">{{ soundEnabled ? 'Disable Sound' : 'Enable Sound' }}</button>
       </div>
     </div>
@@ -20,13 +18,11 @@ export default {
   name: 'AngleApp',
   data() {
     return {
-      alpha: null,
-      beta: null,
-      gamma: null,
+      angle: null,
       audioContext: null,
       oscillator: null,
       soundEnabled: false,
-      thresholdBeta: 20,
+      thresholdAngle: 20,
       hasPermission: false
     }
   },
@@ -62,22 +58,24 @@ export default {
     },
 
     updateOrientation(event) {
-      this.alpha = event.alpha;
-      this.beta = event.beta;
-      this.gamma = event.gamma;
+      this.angle = event.beta;
+      document.body.style.backgroundColor = this.toColor(this.angle);
 
       if(!this.oscillator) {
         return;
       }
 
-      // Adjust frequency based on beta value.
       if (!this.soundEnabled) {
         this.oscillator.frequency.value = 0; // silence the sound
-      } else if (this.beta < 0 || this.beta > this.thresholdBeta) {
-        this.oscillator.frequency.value = 880;
       } else {
-        let frequency = 300 + ((this.beta / this.thresholdBeta) * (660 - 300));
-        this.oscillator.frequency.value = frequency;
+        this.oscillator.frequency.value = this.toFreq(this.angle);
+
+        if (this.angle > this.thresholdAngle) {
+          // Add a blink effect when angle is above threshold.
+          document.body.classList.add('blink');
+        } else {
+          document.body.classList.remove('blink');
+        }
       }
     },
 
@@ -85,34 +83,65 @@ export default {
       return number !== null ? number.toFixed(1) : 'N/A';
     },
 
-    toColor(number) {
-      // Use number to create a color. This will create a color from black to green.
-      // Replace this with your own logic if needed.
-      const value = Math.abs(number % 360);
-      return `hsl(${value}, 100%, 50%)`;
+    toColor(angle) {
+      // Define colors
+      let maxAngle = this.thresholdAngle + 10
+      let color = 'red';
+      if (angle >= this.thresholdAngle - 5 && angle < this.thresholdAngle) {
+        color = 'yellow';
+      } else if (angle >= this.thresholdAngle && angle < maxAngle) {
+        color = 'green';
+      }
+      return color;
+    },
+
+    toFreq(angle) {
+      let frequency = 0;
+      const maxAngle = this.thresholdAngle + 10
+      if (angle > this.thresholdAngle && angle < maxAngle) {
+        frequency = 440;
+      } else {
+        frequency = 200 + ((angle / this.thresholdAngle) * (380 - 200));
+        if (angle>maxAngle || angle<0) {
+          frequency = 0;
+        }
+      }
+
+      return frequency;
     },
 
     toggleSound() {
-  this.soundEnabled = !this.soundEnabled;
+      this.soundEnabled = !this.soundEnabled;
 
-  if (!this.soundEnabled && this.oscillator) {
-    this.oscillator.stop();
-    this.oscillator.disconnect();
-    this.oscillator = null;
+      if (!this.soundEnabled && this.oscillator) {
+        this.oscillator.stop();
+        this.oscillator.disconnect();
+        this.oscillator = null;
+      }
+      else if(this.soundEnabled && !this.oscillator) {
+        this.startSound();
+      }
+    },
+
+    startSound() {
+      // Create a new AudioContext each time
+      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      this.oscillator = this.audioContext.createOscillator();
+      this.oscillator.connect(this.audioContext.destination);
+      this.oscillator.start();
+    }
   }
-  else if(this.soundEnabled && !this.oscillator) {
-    this.startSound();
-  }
-},
-
-startSound() {
-  // Create a new AudioContext each time
-  this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  this.oscillator = this.audioContext.createOscillator();
-  this.oscillator.connect(this.audioContext.destination);
-  this.oscillator.start();
-}
-
-}
 }
 </script>
+
+<style scoped>
+@keyframes blink {
+  0% {opacity: 1;}
+  50% {opacity: 0.5;}
+  100% {opacity: 1;}
+}
+
+.blink {
+  animation: blink 1s linear infinite;
+}
+</style>
