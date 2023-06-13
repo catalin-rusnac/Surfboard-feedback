@@ -2,12 +2,15 @@
   <div id="app">
     <div>
       <h1>Device Orientation</h1>
-      <p :style="{ color: toColor(alpha) }">Alpha: {{ formatNumber(alpha) }}</p>
-      <p :style="{ color: toColor(beta) }">Beta: {{ formatNumber(beta) }}</p>
-      <p :style="{ color: toColor(gamma) }">Gamma: {{ formatNumber(gamma) }}</p>
-      <label for="betaLimit">Beta limit:</label>
-      <input id="betaLimit" type="number" v-model.number="thresholdBeta" min="0" max="50" step="1" />
-      <button @click="toggleSound">{{ soundEnabled ? 'Disable Sound' : 'Enable Sound' }}</button>
+      <button v-if="!hasPermission" @click="getOrientationPermission">Enable Device Orientation</button>
+      <div v-else>
+        <p :style="{ color: toColor(alpha) }">Alpha: {{ formatNumber(alpha) }}</p>
+        <p :style="{ color: toColor(beta) }">Beta: {{ formatNumber(beta) }}</p>
+        <p :style="{ color: toColor(gamma) }">Gamma: {{ formatNumber(gamma) }}</p>
+        <label for="betaLimit">Beta limit:</label>
+        <input id="betaLimit" type="number" v-model.number="thresholdBeta" min="0" max="50" step="1" />
+        <button @click="toggleSound">{{ soundEnabled ? 'Disable Sound' : 'Enable Sound' }}</button>
+      </div>
     </div>
   </div>
 </template>
@@ -23,17 +26,16 @@ export default {
       audioContext: null,
       oscillator: null,
       soundEnabled: false,
-      thresholdBeta: 20
+      thresholdBeta: 20,
+      hasPermission: false
     }
   },
   created() {
-  this.getOrientationPermission();
-  window.addEventListener('deviceorientation', this.updateOrientation);
-  if(this.soundEnabled) {
-    this.startSound();
-  }
-},
-
+    window.addEventListener('deviceorientation', this.updateOrientation);
+    if(this.soundEnabled) {
+      this.startSound();
+    }
+  },
   beforeUnmount() {
     window.removeEventListener('deviceorientation', this.updateOrientation);
     if(this.oscillator) {
@@ -49,12 +51,13 @@ export default {
         DeviceOrientationEvent.requestPermission()
           .then(permissionState => {
             if (permissionState === 'granted') {
-              window.addEventListener('deviceorientation', this.updateOrientation);
+              this.hasPermission = true;
             }
           })
           .catch(console.error);
       } else {
         // handle regular non iOS 13+ devices
+        this.hasPermission = true;
       }
     },
 
